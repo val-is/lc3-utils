@@ -1,0 +1,34 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "lc3.h"
+
+int
+main() {
+    LC3 *l;
+    l = malloc(sizeof(LC3));
+    
+    l->running = 1;
+    l->reg[R_PC] = 0x3000;
+    l->mem[0x3000] = 0xe206;
+    l->mem[0x3001] = 0x6040;
+    l->mem[0x3002] = 0x0403;
+    l->mem[0x3003] = 0xf021;
+    l->mem[0x3004] = 0x1261; /* 0001 001 001 1 00001 */
+    l->mem[0x3005] = 0x0ffb; /* 0000 111 111111011 */
+    l->mem[0x3006] = 0xf025;
+    l->mem[0x3007] = 0x0048;
+    l->mem[0x3008] = 0x0065;
+    l->mem[0x3009] = 0x006c;
+    l->mem[0x300a] = 0x006c;
+    l->mem[0x300b] = 0x006f;
+    l->mem[0x300c] = 0x0020;
+    l->mem[0x300d] = 0x0077;
+    l->mem[0x300e] = 0x006f;
+    l->mem[0x300f] = 0x0072;
+    l->mem[0x3010] = 0x006c;
+    l->mem[0x3011] = 0x0064;
+    l->mem[0x3012] = 0x0021;
+    l->mem[0x3013] = 0x0a00;
+
+    run_lc3(l);
+}
