@@ -255,7 +255,7 @@ main(int argc, char **argv) {
     
     if (out_path == NULL)
         out_path = "out.obj";
-    FILE *out = fopen(out_path, "w");
+    FILE *out = fopen(out_path, "wb");
     if (out == NULL) {
         printf("Unable to open file %s for writing\n", out_path);
     }
@@ -304,8 +304,14 @@ main(int argc, char **argv) {
 
     // with our lines+symbols loaded in, we can now go through and dump to the output
     struct Instruction *current = instructions;
+    uint16_t orig_addr = current->addr;
+    char buff[] = {(orig_addr & 0xFF00) >> 8, orig_addr & 0x00FF};
+    fwrite(buff, sizeof(char), sizeof(buff), out);
     while (current != NULL) {
-        printf("%x %x\n", current->addr, parse_instruction(current, instructions));
+        uint16_t instr = parse_instruction(current, instructions);
+        buff[0] = (instr & 0xFF00) >> 8;
+        buff[1] = instr & 0x00FF;
+        fwrite(buff, sizeof(char), sizeof(buff), out);
         /* parse_instruction(current, instructions); */
         /* puts(""); */
         /* fprintf(out, "%x\n", current->addr); */

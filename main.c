@@ -2,33 +2,45 @@
 #include <stdlib.h>
 #include "lc3.h"
 
+void load_file(FILE *fp, LC3 *l);
+
+void
+load_file(FILE *fp, LC3 *l) {
+    fseek(fp, 0, SEEK_END);
+    long filelen = ftell(fp);
+    rewind(fp);
+
+    char *buffer = (char*) malloc(2 * sizeof(char));
+    uint16_t memptr = 0;
+    for (int i = 0; i < filelen; i += 2) {
+        fread(buffer, sizeof(char), 2, fp);
+        uint16_t val = (((uint8_t) buffer[0]) << 8) | ((uint8_t) buffer[1]);
+        if (i == 0) {
+            memptr = val;
+            l->reg[R_PC] = val;
+        } else {
+            l->mem[memptr] = val;
+            memptr++;
+        }
+    }
+}
+
 int
-main() {
+main(int argc, char **argv) {
+    char *in_path = argv[1];
+
+    FILE *in = fopen(in_path, "rb");
+    if (in == NULL) {
+        printf("Unable to open file %s\n", in_path);
+        return -1;
+    }
+    
     LC3 *l;
     l = malloc(sizeof(LC3));
+
+    load_file(in, l);
     
     l->running = 1;
-    l->reg[R_PC] = 0x3000;
-    l->mem[0x3000] = 0xe206;
-    l->mem[0x3001] = 0x6040;
-    l->mem[0x3002] = 0x0403;
-    l->mem[0x3003] = 0xf021;
-    l->mem[0x3004] = 0x1261; /* 0001 001 001 1 00001 */
-    l->mem[0x3005] = 0x0ffb; /* 0000 111 111111011 */
-    l->mem[0x3006] = 0xf025;
-    l->mem[0x3007] = 0x0048;
-    l->mem[0x3008] = 0x0065;
-    l->mem[0x3009] = 0x006c;
-    l->mem[0x300a] = 0x006c;
-    l->mem[0x300b] = 0x006f;
-    l->mem[0x300c] = 0x0020;
-    l->mem[0x300d] = 0x0077;
-    l->mem[0x300e] = 0x006f;
-    l->mem[0x300f] = 0x0072;
-    l->mem[0x3010] = 0x006c;
-    l->mem[0x3011] = 0x0064;
-    l->mem[0x3012] = 0x0021;
-    l->mem[0x3013] = 0x0a00;
 
     run_lc3(l);
 }
