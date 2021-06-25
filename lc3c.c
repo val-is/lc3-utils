@@ -42,6 +42,7 @@ struct Instruction {
 
 struct Line *parse_line(char *line);
 long extract_addr(char *value);
+void process_instruction(struct Instruction *this, struct Instruction *instructions);
 uint16_t parse_instruction(struct Instruction *this, struct Instruction *instructions);
 
 struct Line *
@@ -97,6 +98,75 @@ extract_addr(char *value) {
     return (long) val;
 }
 
+void
+process_instruction(struct Instruction *this, struct Instruction *instructions) {
+    switch (this->line->keyword_index) {
+    case 32: /* .STRINGZ */
+        /* insert another .STRINGZ with s[1:], return the 1st char as a .FILL */
+        if (this->line->ops[0] == '\\') {
+            char preceding;
+            switch (this->line->ops[1]) {
+            case 't':
+                preceding = '\t';
+                break;
+            case 'n':
+                preceding = '\n';
+                break;
+            case '"':
+                preceding = '"';
+                break;
+            case '0':
+                preceding = '\0';
+                break;
+            case '\\':
+                preceding = '\\';
+                break;
+            }
+            char trimmed_ops[max_ops_len];
+            strncpy(trimmed_ops, this->line->ops+1, strlen(this->line->ops));
+            trimmed_ops[0] = preceding;
+            strcpy(this->line->ops, trimmed_ops);
+        } else if (this->line->ops[0] == '"') {
+            int end = 0;
+            for (int i = 1; i < strlen(this->line->ops); i++) {
+                if (this->line->ops[i] == '"' && this->line->ops[i-1] != '\\') {
+                    end = i;
+                    break;
+                }
+            }
+            char new_ops[max_ops_len];
+            strcpy(new_ops, "");
+            strncpy(new_ops, this->line->ops+1, end-1);
+            strcpy(this->line->ops, new_ops);
+        }
+        if (strlen(this->line->ops) > 1) {
+            char strz[max_ops_len];
+            strncpy(strz, this->line->ops+1, strlen(this->line->ops));
+            
+            struct Line *parsed = (struct Line*) malloc(sizeof(struct Line));
+            strcpy(parsed->keyword, ".STRINGZ");
+            parsed->keyword_index = 32;
+            strcpy(parsed->ops, strz);
+            
+            struct Instruction *next = (struct Instruction*) malloc(sizeof(struct Instruction));
+            next->addr = this->addr + 1;
+            next->line = parsed;
+            
+            struct Instruction *offsetting = this->next;
+            while (offsetting != NULL) {
+                offsetting->addr++;
+                offsetting = offsetting->next;
+            }
+            
+            next->next = this->next;
+            this->next = next;
+        }
+        return;
+    default:
+        return;
+    }
+}
+
 uint16_t
 parse_instruction(struct Instruction *this, struct Instruction *instructions) {
     uint16_t params[5];
@@ -106,7 +176,9 @@ parse_instruction(struct Instruction *this, struct Instruction *instructions) {
         param_types[i] = P_UNUSED;
     }
     int p = 0;
-    char *tokens = strtok(this->line->ops, " ");
+    char tokenizing[max_ops_len];
+    strcpy(tokenizing, this->line->ops);
+    char *tokens = strtok(tokenizing, " ");
     while (tokens != NULL) {
         int resolved = 0;
 
@@ -221,9 +293,10 @@ parse_instruction(struct Instruction *this, struct Instruction *instructions) {
         return 0;
     case 30: /* .FILL */
         return params[0];
-    case 31: /* .BLKW */ // TODO
-    case 32: /* .STRINGZ */
+    case 31: /* .BLKW */
         return 0;
+    case 32: /* .STRINGZ */
+        return (uint16_t) this->line->ops[0];
     }
     return 0;
 }
@@ -302,8 +375,15 @@ main(int argc, char **argv) {
     // drop .ORIG (mem leak lul)
     instructions = instructions->next;
 
-    // with our lines+symbols loaded in, we can now go through and dump to the output
+    // process instructions
     struct Instruction *current = instructions;
+    while (current != NULL) {
+        process_instruction(current, instructions);
+        current = current->next;
+    }
+
+    // with our lines+symbols loaded in, we can now go through and dump to the output
+    current = instructions;
     uint16_t orig_addr = current->addr;
     char buff[] = {(orig_addr & 0xFF00) >> 8, orig_addr & 0x00FF};
     fwrite(buff, sizeof(char), sizeof(buff), out);
