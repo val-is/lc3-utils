@@ -15,7 +15,8 @@ const char *keywords[] = {
     "BR", "BRn", "BRz", "BRp", "BRnz", "BRzp", "BRnp", "BRnzp",
     "JMP", "JSR", "JSRR", "RET", "RTI",
     "GETC", "OUT", "PUTS", "IN", "PUTSP", "HALT",
-    ".ORIG", ".FILL", ".BLKW", ".STRINGZ", ".END"
+    ".ORIG", ".FILL", ".BLKW", ".STRINGZ", ".END",
+    "DUMP", "BREAK"
 };
 
 const char *regs[] = {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7"};
@@ -288,6 +289,10 @@ parse_instruction(struct Instruction *this, struct Instruction *instructions) {
         return (0b1111 << 12) | (0x024);
     case 28: /* HALT */
         return (0b1111 << 12) | (0x025);
+    case 34: /* DUMP */
+        return (0b1111 << 12) | (0x026);
+    case 35: /* BREAK */
+        return (0b1111 << 12) | (0x027);
     case 29: /* .ORIG, .END */
     case 33:
         return 0;

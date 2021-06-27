@@ -39,7 +39,7 @@ op_br(LC3 *l) {
 void
 op_add(LC3 *l) {
     l->reg[spl_pc(l, 9, 12)] = l->reg[spl_pc(l, 6, 9)] + (spl_pc(l, 5, 6) ?
-        sign_extend(spl_pc(l, 0, 5), 5) : l->reg[spl_pc(l, 0, 2)]);
+        sign_extend(spl_pc(l, 0, 5), 5) : l->reg[spl_pc(l, 0, 3)]);
     update_flags(l, spl_pc(l, 9, 12));
 }
 
@@ -183,6 +183,12 @@ op_trap(LC3 *l) {
         return;
     case T_HALT:
         t_halt(l);
+        return;
+    case T_DUMP:
+        dump_regs(l);
+        return;
+    case T_BREAK:
+        getchar();
         return;
     }
 }

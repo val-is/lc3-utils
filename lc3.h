@@ -27,7 +27,9 @@ enum {
     T_PUTS  = 0x22,
     T_IN    = 0x23,
     T_PUTSP = 0x24,
-    T_HALT  = 0x25
+    T_HALT  = 0x25,
+    T_DUMP  = 0x26,
+    T_BREAK = 0x27
 };
 
 typedef struct LC3 {

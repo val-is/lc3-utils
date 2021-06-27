@@ -27,18 +27,20 @@ load_file(FILE *fp, LC3 *l) {
 
 int
 main(int argc, char **argv) {
-    char *in_path = argv[1];
-
-    FILE *in = fopen(in_path, "rb");
-    if (in == NULL) {
-        printf("Unable to open file %s\n", in_path);
-        return -1;
-    }
-    
     LC3 *l;
     l = malloc(sizeof(LC3));
 
-    load_file(in, l);
+    for (int i = 1; i < argc; i++) {
+        char *in_path = argv[i];
+        
+        FILE *in = fopen(in_path, "rb");
+        if (in == NULL) {
+            printf("Unable to open file %s\n", in_path);
+            return -1;
+        }
+        
+        load_file(in, l);
+    }
     
     l->running = 1;
 
